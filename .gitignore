@@ -1,0 +1,21 @@
+# Composer and frontend dependencies
+/vendor/
+/node_modules/
+
+# Generated frontend assets
+/public/build/
+
+# Runtime files
+/storage/cache/*
+/storage/logs/*
+!/storage/cache/.gitignore
+!/storage/logs/.gitignore
+
+# Local environment files
+/.env
+/.env.*
+!/.env.production.example
+
+# IDE and operating system files
+/.idea/
+.DS_Store

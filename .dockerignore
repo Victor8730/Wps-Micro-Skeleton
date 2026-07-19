@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.env*
+.DS_Store
+node_modules
+public/build
+storage/cache
+storage/logs
+tests
+vendor
+*.log

@@ -1,0 +1,28 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use WpsMicro\Core\Console\Application;
+use WpsMicro\Core\Console\Commands\MakeControllerCommand;
+use WpsMicro\Core\Console\Commands\MakeMigrationCommand;
+use WpsMicro\Core\Console\Commands\MakeModelCommand;
+use WpsMicro\Core\Console\Commands\MigrateCommand;
+use WpsMicro\Core\Console\Commands\MigrateRollbackCommand;
+use WpsMicro\Core\Kernel;
+
+/** @var Kernel $kernel */
+$kernel = require __DIR__ . '/bootstrap/app.php';
+$container = $kernel->getContainer();
+
+$rootPath = __DIR__;
+
+$application = new Application();
+$application
+    ->add(new MigrateCommand($container))
+    ->add(new MigrateRollbackCommand($container))
+    ->add(new MakeControllerCommand($rootPath . '/app/Controllers', 'App\\Controllers'))
+    ->add(new MakeModelCommand($rootPath . '/app/Models', 'App\\Models'))
+    ->add(new MakeMigrationCommand($rootPath . '/database/migrations'));
+
+exit($application->run($argv));
