@@ -51,7 +51,7 @@ final class ApplicationTest extends TestCase
                 'autoescape' => 'html',
             ],
             'vite' => [
-                'manifest_path' => $rootPath . '/public/build/.vite/manifest.json',
+                'manifest_path' => $rootPath . '/tests/Fixtures/vite-manifest.json',
                 'build_path' => 'build',
             ],
         ]));
