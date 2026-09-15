@@ -11,9 +11,11 @@
   ],
   "require": {
     "php": "^8.3",
-    "webpagestudio/wps-micro": "^3.0@dev"
+    "webpagestudio/wps-micro": "^3.1"
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^12.5"
   },
   "autoload": {
@@ -27,11 +29,15 @@
     }
   },
   "config": {
+    "platform": {"php": "8.3.0"},
     "sort-packages": true
   },
-  "prefer-stable": true,
   "scripts": {
-    "test": "phpunit --configuration phpunit.xml.dist"
+    "test": "phpunit --configuration phpunit.xml.dist",
+    "analyse": "phpstan analyse --configuration=phpstan.neon.dist --no-progress",
+    "format": "php-cs-fixer fix --config=.php-cs-fixer.dist.php --sequential",
+    "format:check": "php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff --sequential",
+    "quality": ["@format:check", "@analyse", "@test"]
   },
   "archive": {
     "exclude": [

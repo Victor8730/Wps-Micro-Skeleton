@@ -7,10 +7,13 @@ namespace App\Models;
 use RuntimeException;
 use WpsMicro\Core\Model;
 
+/** @phpstan-type UserRecord array{id: int, name: string, email: string, password: string, created_at: string, updated_at: string} */
 class User extends Model
 {
     /**
      * Find a user by its primary key.
+     *
+     * @return UserRecord|null
      */
     public function findById(int $id): ?array
     {
@@ -26,6 +29,8 @@ class User extends Model
 
     /**
      * Find a user by email address.
+     *
+     * @return UserRecord|null
      */
     public function findByEmail(string $email): ?array
     {
@@ -41,6 +46,8 @@ class User extends Model
 
     /**
      * Store a new user and return it.
+     *
+     * @return UserRecord
      */
     public function create(string $name, string $email, string $passwordHash): array
     {

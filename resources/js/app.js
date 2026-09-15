@@ -1,6 +1,11 @@
 import '../css/app.css';
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form[data-confirm]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+    });
+  });
   document.querySelectorAll('[data-validate]').forEach((form) => {
     const fields = [...form.querySelectorAll('input, select, textarea')]
       .filter((field) => field.type !== 'hidden');

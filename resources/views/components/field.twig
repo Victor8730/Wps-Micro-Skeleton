@@ -1,0 +1,21 @@
+{% set type = type|default('text') %}
+{% set field_error = error(name) %}
+<div>
+    <label for="{{ name }}" class="block text-sm font-medium text-zinc-700">{{ label }}</label>
+    {% if type == 'textarea' %}
+        <textarea id="{{ name }}" name="{{ name }}" rows="6" class="field" aria-invalid="{{ field_error ? 'true' : 'false' }}"
+            {% if field_error %}aria-describedby="{{ name }}-error"{% endif %}
+            {% if required|default(true) %}required{% endif %}
+            {% if maxlength is defined %}maxlength="{{ maxlength }}"{% endif %}>{{ old(name, value|default('')) }}</textarea>
+    {% else %}
+        <input id="{{ name }}" name="{{ name }}" type="{{ type }}" class="field"
+            {% if type != 'password' %}value="{{ old(name, value|default('')) }}"{% endif %}
+            aria-invalid="{{ field_error ? 'true' : 'false' }}"
+            {% if field_error %}aria-describedby="{{ name }}-error"{% endif %}
+            {% if required|default(true) %}required{% endif %}
+            {% if autocomplete is defined %}autocomplete="{{ autocomplete }}"{% endif %}
+            {% if minlength is defined %}minlength="{{ minlength }}"{% endif %}
+            {% if maxlength is defined %}maxlength="{{ maxlength }}"{% endif %}>
+    {% endif %}
+    {% if field_error %}<p id="{{ name }}-error" class="mt-1.5 text-sm text-red-700">{{ field_error }}</p>{% endif %}
+</div>

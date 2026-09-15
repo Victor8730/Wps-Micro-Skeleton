@@ -9,6 +9,7 @@ use WpsMicro\Core\Controller;
 use WpsMicro\Core\Exceptions\ValidationException;
 use WpsMicro\Core\Request;
 use WpsMicro\Core\Response;
+use WpsMicro\Core\Router;
 use WpsMicro\Core\Session;
 use WpsMicro\Core\Validator;
 use WpsMicro\Core\ViewRenderer;
@@ -33,7 +34,8 @@ class ControllerAuth extends Controller
         ViewRenderer $view,
         Validator $validator,
         Session $session,
-        AuthService $auth
+        AuthService $auth,
+        private Router $router,
     ) {
         $this->session = $session;
         $this->auth = $auth;
@@ -47,7 +49,7 @@ class ControllerAuth extends Controller
     public function actionLogin(): Response
     {
         if ($this->auth->check()) {
-            return $this->redirect('/account');
+            return $this->redirect($this->router->url('account'));
         }
 
         return $this->render('auth/login.twig', ['auth_user' => null]);
@@ -74,7 +76,7 @@ class ControllerAuth extends Controller
         $user = $this->auth->user();
         $this->session->flash('success', 'Welcome back, ' . ($user['name'] ?? 'user') . '.');
 
-        return $this->redirect('/account');
+        return $this->redirect($this->router->url('account'));
     }
 
     /**
@@ -83,7 +85,7 @@ class ControllerAuth extends Controller
     public function actionRegister(): Response
     {
         if ($this->auth->check()) {
-            return $this->redirect('/account');
+            return $this->redirect($this->router->url('account'));
         }
 
         return $this->render('auth/register.twig', ['auth_user' => null]);
@@ -112,7 +114,7 @@ class ControllerAuth extends Controller
 
         $this->session->flash('success', 'Your account has been created.');
 
-        return $this->redirect('/account');
+        return $this->redirect($this->router->url('account'));
     }
 
     /**
@@ -123,7 +125,7 @@ class ControllerAuth extends Controller
         $user = $this->auth->user();
 
         if ($user === null) {
-            return $this->redirect('/login');
+            return $this->redirect($this->router->url('login'));
         }
 
         return $this->render('auth/account.twig', ['auth_user' => $user]);
@@ -137,6 +139,6 @@ class ControllerAuth extends Controller
         $this->auth->logout();
         $this->session->flash('success', 'You have been logged out.');
 
-        return $this->redirect('/login');
+        return $this->redirect($this->router->url('login'));
     }
 }

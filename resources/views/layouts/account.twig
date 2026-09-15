@@ -1,0 +1,10 @@
+{% extends 'layouts/app.twig' %}
+{% block content %}
+<div class="grid gap-8 md:grid-cols-[180px_minmax(0,1fr)]">
+    <nav aria-label="Account navigation" class="flex gap-4 md:flex-col md:gap-3">
+        <a href="{{ route('account') }}" class="font-medium text-zinc-700 hover:underline">Profile</a>
+        <a href="{{ route('messages.index') }}" class="font-medium text-zinc-700 hover:underline">My messages</a>
+    </nav>
+    <div class="min-w-0">{% block account_content %}{% endblock %}</div>
+</div>
+{% endblock %}

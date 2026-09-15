@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Middleware\AuthMiddleware;
+use App\Services\AuthService;
 use PHPUnit\Framework\TestCase;
 use WpsMicro\Core\Request;
 use WpsMicro\Core\Response;
-use WpsMicro\Core\Session;
+use WpsMicro\Core\Router;
 
 final class AuthMiddlewareTest extends TestCase
 {
     public function testItAllowsAuthenticatedRequests(): void
     {
-        $middleware = new AuthMiddleware(new AuthSession(true));
+        $middleware = $this->middleware(true);
 
         $response = $middleware->handle(
             new Request('GET', '/account'),
@@ -27,7 +28,7 @@ final class AuthMiddlewareTest extends TestCase
 
     public function testItReturnsJsonForUnauthenticatedApiRequests(): void
     {
-        $middleware = new AuthMiddleware(new AuthSession(false));
+        $middleware = $this->middleware(false);
 
         $response = $middleware->handle(
             new Request('GET', '/account', [], [], [], ['Accept' => 'application/json']),
@@ -43,7 +44,7 @@ final class AuthMiddlewareTest extends TestCase
 
     public function testItRedirectsUnauthenticatedBrowserRequests(): void
     {
-        $middleware = new AuthMiddleware(new AuthSession(false));
+        $middleware = $this->middleware(false);
 
         $response = $middleware->handle(
             new Request('GET', '/account'),
@@ -53,16 +54,24 @@ final class AuthMiddlewareTest extends TestCase
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/login', $response->getHeaders()['Location'] ?? null);
     }
+
+    private function middleware(bool $authenticated): AuthMiddleware
+    {
+        $router = new Router();
+        $router->get('/login', 'Controller@login')->name('login');
+
+        return new AuthMiddleware(new StubAuth($authenticated), $router);
+    }
 }
 
-final class AuthSession extends Session
+final class StubAuth extends AuthService
 {
     public function __construct(private readonly bool $authenticated)
     {
     }
 
-    public function has(string $key): bool
+    public function check(): bool
     {
-        return $key === 'user_id' && $this->authenticated;
+        return $this->authenticated;
     }
 }

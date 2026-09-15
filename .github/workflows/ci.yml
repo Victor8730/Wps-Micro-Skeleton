@@ -64,3 +64,49 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+  quality:
+    name: Static analysis and code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, pdo, pdo_sqlite
+          coverage: none
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: composer format:check
+      - run: composer analyse
+      - run: php wps route:list
+
+  mariadb:
+    name: Application migrations on MariaDB
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: wps_skeleton_test
+          MARIADB_USER: skeleton
+          MARIADB_PASSWORD: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WPS_TEST_MARIADB_HOST: 127.0.0.1
+      WPS_TEST_MARIADB_DATABASE: wps_skeleton_test
+      WPS_TEST_MARIADB_USERNAME: skeleton
+      WPS_TEST_MARIADB_PASSWORD: testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, mbstring, pdo, pdo_mysql
+          coverage: none
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/phpunit --filter testMigrationAndRollbackWithMariaDb

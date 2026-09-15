@@ -1,0 +1,15 @@
+{% extends 'layouts/account.twig' %}
+{% block title %}{{ message ? 'Edit message' : 'New message' }} | WPS Micro{% endblock %}
+{% block account_content %}
+<h1 class="mb-6 text-2xl font-semibold">{{ message ? 'Edit message' : 'New message' }}</h1>
+<form action="{{ message ? route('messages.update', {id: message.id}) : route('messages.store') }}" method="post" class="max-w-2xl space-y-5" data-validate novalidate>
+    {{ csrf_field() }}
+    {% if message %}<input type="hidden" name="_method" value="PUT">{% endif %}
+    {% include 'components/field.twig' with {name: 'title', label: 'Title', value: message.title|default(''), maxlength: 255} only %}
+    {% include 'components/field.twig' with {name: 'body', label: 'Message', type: 'textarea', value: message.body|default(''), maxlength: 10000} only %}
+    <div class="flex gap-3">
+        <button type="submit" class="btn-primary">Save message</button>
+        <a href="{{ route('messages.index') }}" class="btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

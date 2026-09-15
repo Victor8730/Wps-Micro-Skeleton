@@ -3,13 +3,18 @@
 
 declare(strict_types=1);
 
+use App\Console\CheckCommand;
+use App\Console\SeedCommand;
+use App\Console\SetupCommand;
 use WpsMicro\Core\Console\Application;
 use WpsMicro\Core\Console\Commands\MakeControllerCommand;
 use WpsMicro\Core\Console\Commands\MakeMigrationCommand;
 use WpsMicro\Core\Console\Commands\MakeModelCommand;
 use WpsMicro\Core\Console\Commands\MigrateCommand;
 use WpsMicro\Core\Console\Commands\MigrateRollbackCommand;
+use WpsMicro\Core\Console\Commands\RouteListCommand;
 use WpsMicro\Core\Kernel;
+use WpsMicro\Core\Router;
 
 /** @var Kernel $kernel */
 $kernel = require __DIR__ . '/bootstrap/app.php';
@@ -19,6 +24,10 @@ $rootPath = __DIR__;
 
 $application = new Application();
 $application
+    ->add(new SetupCommand($rootPath))
+    ->add(new CheckCommand($container))
+    ->add(new SeedCommand($container))
+    ->add(new RouteListCommand($container->get(Router::class)))
     ->add(new MigrateCommand($container))
     ->add(new MigrateRollbackCommand($container))
     ->add(new MakeControllerCommand($rootPath . '/app/Controllers', 'App\\Controllers'))

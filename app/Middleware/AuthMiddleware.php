@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Services\AuthService;
 use WpsMicro\Core\JsonResponse;
 use WpsMicro\Core\Middleware;
 use WpsMicro\Core\RedirectResponse;
 use WpsMicro\Core\Request;
 use WpsMicro\Core\Response;
-use WpsMicro\Core\Session;
+use WpsMicro\Core\Router;
 
 class AuthMiddleware implements Middleware
 {
     /**
      * Session storage used to resolve the current user.
      */
-    private Session $session;
+    private AuthService $auth;
 
     /**
      * Create the authentication middleware.
      */
-    public function __construct(Session $session)
+    public function __construct(AuthService $auth, private Router $router)
     {
-        $this->session = $session;
+        $this->auth = $auth;
     }
 
     /**
@@ -31,7 +32,7 @@ class AuthMiddleware implements Middleware
      */
     public function handle(Request $request, callable $next): Response
     {
-        if ($this->session->has('user_id')) {
+        if ($this->auth->check()) {
             return $next($request);
         }
 
@@ -39,6 +40,6 @@ class AuthMiddleware implements Middleware
             return new JsonResponse(['message' => 'Unauthenticated.'], 401);
         }
 
-        return new RedirectResponse('/login');
+        return new RedirectResponse($this->router->url('login'));
     }
 }

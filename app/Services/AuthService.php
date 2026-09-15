@@ -6,8 +6,13 @@ namespace App\Services;
 
 use App\Models\User;
 use PDOException;
+use WpsMicro\Core\Exceptions\HttpNotFoundException;
 use WpsMicro\Core\Session;
 
+/**
+ * @phpstan-import-type UserRecord from User
+ * @phpstan-type PublicUser array{id: int, name: string, email: string, created_at: string, updated_at: string}
+ */
 class AuthService
 {
     private User $users;
@@ -16,6 +21,7 @@ class AuthService
 
     private bool $userResolved = false;
 
+    /** @var PublicUser|null */
     private ?array $currentUser = null;
 
     /**
@@ -51,6 +57,8 @@ class AuthService
 
     /**
      * Register and authenticate a new user.
+     *
+     * @return PublicUser|null
      */
     public function register(string $name, string $email, string $password): ?array
     {
@@ -77,6 +85,8 @@ class AuthService
 
     /**
      * Return the authenticated user without its password hash.
+     *
+     * @return PublicUser|null
      */
     public function user(): ?array
     {
@@ -87,7 +97,9 @@ class AuthService
         $this->userResolved = true;
         $userId = $this->session->get('user_id');
 
-        if (!is_int($userId) && !ctype_digit((string) $userId)) {
+        if ((!is_int($userId) && !is_string($userId))
+            || filter_var($userId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            $this->session->forget('user_id');
             return null;
         }
 
@@ -113,6 +125,16 @@ class AuthService
     }
 
     /**
+     * Resolve the authenticated user for an authorized controller action.
+     *
+     * @return PublicUser
+     */
+    public function requireUser(): array
+    {
+        return $this->user() ?? throw new HttpNotFoundException();
+    }
+
+    /**
      * End the authenticated session.
      */
     public function logout(): void
@@ -124,6 +146,8 @@ class AuthService
 
     /**
      * Store an authenticated user in the session.
+     *
+     * @param UserRecord $user
      */
     private function login(array $user): void
     {
@@ -143,6 +167,9 @@ class AuthService
 
     /**
      * Remove sensitive credentials from a user record.
+     *
+     * @param UserRecord $user
+     * @return PublicUser
      */
     private function withoutPassword(array $user): array
     {

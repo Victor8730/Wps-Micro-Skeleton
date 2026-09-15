@@ -15,6 +15,7 @@ Application skeleton for building sites with the WPS Micro framework.
 composer create-project webpagestudio/wps-micro-skeleton my-site
 cd my-site
 cp .env_example .env
+php wps app:setup
 npm ci
 npm run build
 ```
@@ -68,6 +69,10 @@ The sample application uses a database. When PHP runs outside Docker, configure
 
 ```bash
 php wps
+php wps route:list
+php wps app:setup
+php wps app:check
+php wps app:check --database
 php wps make:controller Product
 php wps make:model Product
 php wps make:migration create_products_table
@@ -78,6 +83,55 @@ php wps migrate:rollback
 Generated classes use the application namespace and never modify the installed
 framework package under `vendor/`.
 
+`app:setup` prepares `.env` only if it is missing and creates writable storage
+directories. It does not overwrite secrets, run migrations, or load demo data.
+`app:check` checks configuration, storage, and built assets. Add `--database` to
+test connectivity without printing connection secrets.
+
+## Updating An Existing Application
+
+The skeleton now requires stable `webpagestudio/wps-micro:^3.1`. After updating
+the application files, install locked dependencies, build assets, and migrate:
+
+```bash
+composer install
+npm ci
+npm run build
+php wps app:check --database
+php wps migrate
+```
+
+Inside Docker, use `docker compose exec fpm php wps ...` for console commands.
+Back up your database before applying migrations. Historical migrations remain
+intact; the new migration adds a nullable owner and an index to `home_messages`.
+Existing ownerless demo records remain public and cannot be edited through the
+private CRUD. New user messages appear only in their owner's account.
+
+Rolling back the ownership migration removes ownership metadata. Do not serve
+the application during rollback: restore a compatible database backup when
+downgrading, otherwise previously private rows become ownerless.
+
+## Example Workflow
+
+Register, log in, and open **Account > My messages** to create, edit, or delete
+your own messages. Foreign and missing message IDs both return 404. Mutations
+use POST, PUT, and DELETE with CSRF protection; GET requests never change data.
+Lists show ten records per page. The public home page keeps the original model
+example without exposing private messages.
+
+Optional demonstration data is separate from new schema migrations:
+
+```bash
+php wps db:seed --user=you@example.com
+```
+
+Register that account first. This command creates no users or passwords and
+skips examples whose titles already exist for that user. It refuses production
+execution unless `--force` is supplied. It never runs automatically at boot.
+
+The original released migration still contains its historical welcome record;
+it is retained for compatibility, not used as a pattern for new seed data.
+
 ## Routes
 
 Register routes in `routes/web.php`:
@@ -87,10 +141,14 @@ use App\Controllers\ControllerProduct;
 use WpsMicro\Core\Router;
 
 return static function (Router $router): void {
-    $router->get('/products/{id}', [ControllerProduct::class, 'actionShow']);
-    $router->post('/cart/add', [ControllerCart::class, 'actionAdd']);
+    $router->get('/products/{id}', [ControllerProduct::class, 'actionShow'])
+        ->whereNumber('id')->name('products.show');
 };
 ```
+
+Generate links with `route('products.show', {id: product.id})` in Twig or
+`$router->url('products.show', ['id' => $id])` in PHP. The built-in account and
+message routes use names, groups, and middleware from framework 3.1.
 
 ## Views
 
@@ -111,6 +169,31 @@ Templates can extend layouts and include reusable partials:
     {% include 'products/_card.twig' with { product: product } %}
 {% endblock %}
 ```
+
+Use `layouts/account.twig` and its `account_content` block for protected pages.
+`components/field.twig` renders inputs or textareas with old input, validation
+messages, labels, and accessible error associations. Password values are never
+repopulated. `components/flash.twig` is rendered once by the base layout.
+`components/pagination.twig` takes `page`, `pages`, and a `route_name`.
+
+```twig
+{% include 'components/field.twig' with {
+    name: 'title', label: 'Title', value: message.title|default(''), maxlength: 255
+} only %}
+```
+
+## Quality Checks
+
+```bash
+composer quality
+npm run build
+```
+
+PHPStan level 6 checks application code without a suppression baseline. PHPUnit
+covers registration/login/logout, private CRUD, ownership, CSRF, validation,
+pagination, setup, seeding, and route listing. CI also applies and rolls back
+the real migrations against a disposable MariaDB database. The application
+targets PHP 8.3, 8.4, and 8.5. Commit `composer.lock` for reproducible deployments.
 
 ## Production
 
